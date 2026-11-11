@@ -1,0 +1,18 @@
+[project]
+name = "backend"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "email-validator>=2.3.0",
+    "fastapi[standard]>=0.162.4",
+    "pwdlib[argon2]>=0.3.1",
+    "pyjwt>=2.15.1",
+    "pymysql>=1.2.4",
+    "python-dotenv>=1.2.4",
+    "sqlalchemy>=2.1.8",
+]
+
+[tool.fastapi]
+entrypoint="app.main:app"
