@@ -107,6 +107,7 @@ dependencies = [
     { name = "pyjwt" },
     { name = "pymysql" },
     { name = "python-dotenv" },
+    { name = "python-multipart" },
     { name = "sqlalchemy" },
 ]
 
@@ -118,6 +119,7 @@ requires-dist = [
     { name = "pyjwt", specifier = ">=2.15.1" },
     { name = "pymysql", specifier = ">=1.2.4" },
     { name = "python-dotenv", specifier = ">=1.2.4" },
+    { name = "python-multipart", specifier = ">=0.0.33" },
     { name = "sqlalchemy", specifier = ">=2.1.8" },
 ]
 
