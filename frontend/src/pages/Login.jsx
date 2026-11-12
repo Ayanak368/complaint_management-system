@@ -2,8 +2,10 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import api from "../services/api";
+import { useAuth } from "../context/AuthContext";
 
 function Login() {
+  const { login } = useAuth();
   const navigate = useNavigate();
 
   const [email, setEmail] = useState("");
@@ -13,33 +15,45 @@ function Login() {
 
   const handleLogin = async (e) => {
     e.preventDefault();
+
     setError("");
     setLoading(true);
 
     try {
+      // Step 1: Prepare login credentials
       const formData = new URLSearchParams();
+
       formData.append("username", email);
       formData.append("password", password);
 
+      // Step 2: Send login request
       const response = await api.post("/auth/login", formData, {
         headers: {
           "Content-Type": "application/x-www-form-urlencoded",
         },
       });
 
-      const token = response.data.access_token;
+      // Step 3: Store JWT token
+      localStorage.setItem(
+        "access_token",
+        response.data.access_token
+      );
 
-      localStorage.setItem("access_token", token);
-
+      // Step 4: Fetch logged-in user details
       const userResponse = await api.get("/users/me");
 
       const user = userResponse.data;
 
+      // Step 5: Update AuthContext
+      login(user);
+
+      // Step 6: Navigate based on role
       if (user.role === "ADMIN") {
-        navigate("/admin-dashboard");
+        navigate("/admin-dashboard", { replace: true });
       } else if (user.role === "USER") {
-        navigate("/student-dashboard");
+        navigate("/student-dashboard", { replace: true });
       } else {
+        localStorage.removeItem("access_token");
         setError("Invalid user role");
       }
 
@@ -47,7 +61,8 @@ function Login() {
       localStorage.removeItem("access_token");
 
       setError(
-        error.response?.data?.detail || "Login failed. Please try again."
+        error.response?.data?.detail ||
+        "Login failed. Please try again."
       );
     } finally {
       setLoading(false);
@@ -69,6 +84,7 @@ function Login() {
 
         <form onSubmit={handleLogin} className="mt-8 space-y-5">
 
+          {/* Email */}
           <div>
             <label className="block text-gray-700 mb-2">
               Email Address
@@ -85,6 +101,7 @@ function Login() {
             />
           </div>
 
+          {/* Password */}
           <div>
             <label className="block text-gray-700 mb-2">
               Password
@@ -101,10 +118,14 @@ function Login() {
             />
           </div>
 
+          {/* Error Message */}
           {error && (
-            <p className="text-red-600 text-sm">{error}</p>
+            <p className="text-red-600 text-sm">
+              {error}
+            </p>
           )}
 
+          {/* Login Button */}
           <button
             type="submit"
             disabled={loading}
@@ -115,8 +136,10 @@ function Login() {
 
         </form>
 
+        {/* Register Link */}
         <p className="text-center text-gray-600 mt-6">
           Don't have an account?{" "}
+
           <Link
             to="/register"
             className="text-purple-600 font-semibold hover:underline"

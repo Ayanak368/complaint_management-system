@@ -1,10 +1,12 @@
 
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 import api from "../services/api";
 
 function StudentDashboard() {
   const navigate = useNavigate();
+  const { user, logout } = useAuth();
 
   const [complaints, setComplaints] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -42,8 +44,8 @@ function StudentDashboard() {
 
   // Logout
   const handleLogout = () => {
-    localStorage.removeItem("access_token");
-    navigate("/");
+    logout();
+    navigate("/", { replace: true });
   };
 
   return (
@@ -67,7 +69,7 @@ function StudentDashboard() {
       <div className="p-8">
 
         <h1 className="text-3xl font-bold text-gray-800">
-          Welcome, Student!
+          Welcome, {user?.name || "Student"}!
         </h1>
 
         <p className="text-gray-500 mt-2">

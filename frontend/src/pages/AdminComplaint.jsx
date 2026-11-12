@@ -183,6 +183,10 @@ function AdminComplaints() {
                       Category: {complaint.category}
                     </p>
 
+                    <p className="text-gray-500">
+                      Student Name: {complaint.student_name}
+                    </p>
+
                     <p className="text-gray-400 text-sm mt-1">
                       Submitted:{" "}
                       {new Date(complaint.created_at).toLocaleDateString()}

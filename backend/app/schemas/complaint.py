@@ -28,3 +28,17 @@ class ComplaintResponse(BaseModel):
 
     model_config = {"from_attributes": True}
     
+class AdminComplaintResponse(BaseModel):
+    id: int
+    title: str
+    description: str
+    category: str
+    status: str
+    user_id: int
+    created_at: datetime
+    admin_reply: str | None = None
+    student_name: str
+    student_email: str
+
+    model_config = {"from_attributes": True}
+    

@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from app.dependencies import get_db, get_current_user,is_admin
 from app.models.user import User
 from app.models.complaint import Complaint
-from app.schemas.complaint import ComplaintCreate, ComplaintResponse, AdminReply, ComplaintStatusUpdate
+from app.schemas.complaint import ComplaintCreate, ComplaintResponse, AdminReply, ComplaintStatusUpdate, AdminComplaintResponse
 
 router = APIRouter(
     prefix="/complaints",
@@ -51,14 +51,37 @@ def get_my_complaints(
     return complaints
 
 
-@router.get("/", response_model=list[ComplaintResponse])
+
+@router.get("/", response_model=list[AdminComplaintResponse])
 def get_all_complaints(
     db: Session = Depends(get_db),
     admin: User = Depends(is_admin)
 ):
-    complaints = db.query(Complaint).all()
+    results = (
+        db.query(Complaint, User)
+        .join(User, Complaint.user_id == User.id)
+        .all()
+    )
+
+    complaints = []
+
+    for complaint, student in results:
+        complaints.append({
+            "id": complaint.id,
+            "title": complaint.title,
+            "description": complaint.description,
+            "category": complaint.category,
+            "status": complaint.status,
+            "user_id": complaint.user_id,
+            "created_at": complaint.created_at,
+            "admin_reply": complaint.admin_reply,
+            "student_name": student.name,
+            "student_email": student.email,
+        })
 
     return complaints
+
+
 
 @router.put("/{complaint_id}/reply", response_model=ComplaintResponse)
 def reply_to_complaint(
