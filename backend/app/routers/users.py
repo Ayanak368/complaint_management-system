@@ -5,11 +5,14 @@ from app.dependencies import get_db, get_current_user, is_admin
 from app.models.user import User
 from app.schemas.user import UserResponse
 
-router = APIRouter()
+router = APIRouter(
+    prefix="/users",
+    tags=["Users"])
+
 
 
 # Logged-in user's profile
-@router.get("/users/me", response_model=UserResponse)
+@router.get("/me", response_model=UserResponse)
 def get_my_profile(
     current_user: User = Depends(get_current_user)
 ):
@@ -17,7 +20,7 @@ def get_my_profile(
 
 
 # ADMIN only: Get all users
-@router.get("/users", response_model=list[UserResponse])
+@router.get("", response_model=list[UserResponse])
 def get_all_users(
     db: Session = Depends(get_db),
     admin: User = Depends(is_admin)
@@ -26,7 +29,7 @@ def get_all_users(
 
 #delete user by id (admin only)
 
-@router.delete("/users/{user_id}")
+@router.delete(" /{user_id}")
 def delete_user(
     user_id: int,
     db: Session = Depends(get_db),

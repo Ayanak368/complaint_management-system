@@ -6,10 +6,13 @@ from app.models.user import User
 from app.models.complaint import Complaint
 from app.schemas.complaint import ComplaintCreate, ComplaintResponse, AdminReply, ComplaintStatusUpdate
 
-router = APIRouter()
+router = APIRouter(
+    prefix="/complaints",
+    tags=["Complaints"] 
+)
 
 
-@router.post("/complaints", response_model=ComplaintResponse)
+@router.post("/", response_model=ComplaintResponse)
 def create_complaint(
     complaint_data: ComplaintCreate,
     db: Session = Depends(get_db),
@@ -36,7 +39,7 @@ def create_complaint(
     return new_complaint
 
 
-@router.get("/complaints/my", response_model=list[ComplaintResponse])
+@router.get("/my", response_model=list[ComplaintResponse])
 def get_my_complaints(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
@@ -48,7 +51,7 @@ def get_my_complaints(
     return complaints
 
 
-@router.get("/complaints", response_model=list[ComplaintResponse])
+@router.get("/", response_model=list[ComplaintResponse])
 def get_all_complaints(
     db: Session = Depends(get_db),
     admin: User = Depends(is_admin)
@@ -57,7 +60,7 @@ def get_all_complaints(
 
     return complaints
 
-@router.put("/complaints/{complaint_id}/reply", response_model=ComplaintResponse)
+@router.put("/{complaint_id}/reply", response_model=ComplaintResponse)
 def reply_to_complaint(
     complaint_id: int,
     reply_data: AdminReply,
@@ -81,7 +84,7 @@ def reply_to_complaint(
 
     return complaint
 
-@router.put("/complaints/{complaint_id}/status", response_model=ComplaintResponse)
+@router.put("/{complaint_id}/status", response_model=ComplaintResponse)
 def update_complaint_status(
     complaint_id: int,
     status_data: ComplaintStatusUpdate,
