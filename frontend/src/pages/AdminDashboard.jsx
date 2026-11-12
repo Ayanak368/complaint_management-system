@@ -1,7 +1,55 @@
 
-import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import api from "../services/api";
 
 function AdminDashboard() {
+  const navigate = useNavigate();
+
+  const [complaints, setComplaints] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  // Fetch all complaints
+  useEffect(() => {
+    const fetchComplaints = async () => {
+      try {
+        const response = await api.get("/complaints");
+        setComplaints(response.data);
+      } catch (error) {
+        setError(
+          error.response?.data?.detail ||
+            "Failed to load dashboard statistics."
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchComplaints();
+  }, []);
+
+  // Calculate statistics
+  const totalComplaints = complaints.length;
+
+  const pendingComplaints = complaints.filter(
+    (complaint) => complaint.status === "PENDING"
+  ).length;
+
+  const inProgressComplaints = complaints.filter(
+    (complaint) => complaint.status === "IN_PROGRESS"
+  ).length;
+
+  const resolvedComplaints = complaints.filter(
+    (complaint) => complaint.status === "RESOLVED"
+  ).length;
+
+  // Logout
+  const handleLogout = () => {
+    localStorage.removeItem("access_token");
+    navigate("/");
+  };
+
   return (
     <div className="min-h-screen bg-purple-50">
 
@@ -11,7 +59,10 @@ function AdminDashboard() {
           Admin Portal
         </h1>
 
-        <button className="text-red-500 font-semibold">
+        <button
+          onClick={handleLogout}
+          className="text-red-500 font-semibold hover:text-red-700"
+        >
           Logout
         </button>
       </nav>
@@ -27,27 +78,58 @@ function AdminDashboard() {
           Manage student complaints and responses.
         </p>
 
+        {/* Error */}
+        {error && (
+          <p className="text-red-600 mt-5">
+            {error}
+          </p>
+        )}
+
         {/* Statistics */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mt-8">
 
+          {/* Total Complaints */}
           <div className="bg-white p-6 rounded-xl shadow">
-            <p className="text-gray-500">Total Complaints</p>
-            <h2 className="text-3xl font-bold mt-2">0</h2>
+            <p className="text-gray-500">
+              Total Complaints
+            </p>
+
+            <h2 className="text-3xl font-bold mt-2">
+              {loading ? "..." : totalComplaints}
+            </h2>
           </div>
 
+          {/* Pending */}
           <div className="bg-white p-6 rounded-xl shadow">
-            <p className="text-gray-500">Pending</p>
-            <h2 className="text-3xl font-bold text-yellow-600 mt-2">0</h2>
+            <p className="text-gray-500">
+              Pending
+            </p>
+
+            <h2 className="text-3xl font-bold text-yellow-600 mt-2">
+              {loading ? "..." : pendingComplaints}
+            </h2>
           </div>
 
+          {/* In Progress */}
           <div className="bg-white p-6 rounded-xl shadow">
-            <p className="text-gray-500">In Progress</p>
-            <h2 className="text-3xl font-bold text-blue-600 mt-2">0</h2>
+            <p className="text-gray-500">
+              In Progress
+            </p>
+
+            <h2 className="text-3xl font-bold text-blue-600 mt-2">
+              {loading ? "..." : inProgressComplaints}
+            </h2>
           </div>
 
+          {/* Resolved */}
           <div className="bg-white p-6 rounded-xl shadow">
-            <p className="text-gray-500">Resolved</p>
-            <h2 className="text-3xl font-bold text-green-600 mt-2">0</h2>
+            <p className="text-gray-500">
+              Resolved
+            </p>
+
+            <h2 className="text-3xl font-bold text-green-600 mt-2">
+              {loading ? "..." : resolvedComplaints}
+            </h2>
           </div>
 
         </div>
