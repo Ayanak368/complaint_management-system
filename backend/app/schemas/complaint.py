@@ -35,10 +35,14 @@ class AdminComplaintResponse(BaseModel):
     category: str
     status: str
     user_id: int
+    priority: str
     created_at: datetime
     admin_reply: str | None = None
     student_name: str
     student_email: str
 
     model_config = {"from_attributes": True}
+    
+class ComplaintPriorityUpdate(BaseModel):
+    priority: Literal["LOW", "NORMAL", "HIGH"]
     

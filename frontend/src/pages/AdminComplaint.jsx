@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import api from "../services/api";
@@ -8,6 +9,7 @@ function AdminComplaints() {
   const [error, setError] = useState("");
   const [replies, setReplies] = useState({});
   const [messages, setMessages] = useState({});
+  const [priorityFilter, setPriorityFilter] = useState("ALL");
 
   // Fetch all complaints
   useEffect(() => {
@@ -30,15 +32,60 @@ function AdminComplaints() {
     switch (status) {
       case "PENDING":
         return "bg-yellow-100 text-yellow-700";
-
       case "IN_PROGRESS":
         return "bg-blue-100 text-blue-700";
-
       case "RESOLVED":
         return "bg-green-100 text-green-700";
-
       default:
         return "bg-gray-100 text-gray-700";
+    }
+  };
+
+  // Priority badge styling
+  const getPriorityStyle = (priority) => {
+    switch (priority) {
+      case "HIGH":
+        return "bg-red-100 text-red-700";
+      case "NORMAL":
+        return "bg-yellow-100 text-yellow-700";
+      case "LOW":
+        return "bg-green-100 text-green-700";
+      default:
+        return "bg-gray-100 text-gray-700";
+    }
+  };
+
+  // Update complaint priority
+  const handlePriorityChange = async (complaintId, priority) => {
+    try {
+      const response = await api.put(
+        `/complaints/${complaintId}/priority`,
+        { priority }
+      );
+
+      setComplaints((previous) =>
+        previous.map((complaint) =>
+          complaint.id === complaintId
+            ? { ...complaint, priority: response.data.priority }
+            : complaint
+        )
+      );
+
+      setMessages((previous) => ({
+        ...previous,
+        [complaintId]: {
+          type: "success",
+          text: "Priority updated successfully!",
+        },
+      }));
+    } catch (error) {
+      setMessages((previous) => ({
+        ...previous,
+        [complaintId]: {
+          type: "error",
+          text: error.response?.data?.detail || "Failed to update priority.",
+        },
+      }));
     }
   };
 
@@ -62,20 +109,19 @@ function AdminComplaints() {
         admin_reply: reply,
       });
 
-      // Update complaint in state
       setComplaints((previous) =>
         previous.map((complaint) =>
-          complaint.id === complaintId ? response.data : complaint,
-        ),
+          complaint.id === complaintId
+            ? { ...complaint, admin_reply: response.data.admin_reply }
+            : complaint
+        )
       );
 
-      // Clear textarea value
       setReplies((previous) => ({
         ...previous,
         [complaintId]: "",
       }));
 
-      // Success message
       setMessages((previous) => ({
         ...previous,
         [complaintId]: {
@@ -94,6 +140,7 @@ function AdminComplaints() {
     }
   };
 
+  // Update complaint status
   const handleStatusChange = async (complaintId, status) => {
     try {
       const response = await api.put(`/complaints/${complaintId}/status`, {
@@ -102,8 +149,10 @@ function AdminComplaints() {
 
       setComplaints((previous) =>
         previous.map((complaint) =>
-          complaint.id === complaintId ? response.data : complaint,
-        ),
+          complaint.id === complaintId
+            ? { ...complaint, status: response.data.status }
+            : complaint
+        )
       );
 
       setMessages((previous) => ({
@@ -124,6 +173,14 @@ function AdminComplaints() {
     }
   };
 
+  // Filter complaints by priority
+  const filteredComplaints =
+    priorityFilter === "ALL"
+      ? complaints
+      : complaints.filter(
+          (complaint) => complaint.priority === priorityFilter
+        );
+
   return (
     <div className="min-h-screen bg-purple-50">
       {/* Navbar */}
@@ -133,7 +190,6 @@ function AdminComplaints() {
         </Link>
       </nav>
 
-      {/* Main Content */}
       <div className="max-w-6xl mx-auto p-6 mt-8">
         <h1 className="text-3xl font-bold text-gray-800">All Complaints</h1>
 
@@ -141,25 +197,44 @@ function AdminComplaints() {
           View and manage complaints submitted by students.
         </p>
 
-        {/* Loading */}
+        {/* Priority Filter */}
+        <div className="mt-6 flex flex-wrap items-center gap-3">
+          <label className="font-semibold text-gray-700">
+            Filter by Priority:
+          </label>
+
+          <select
+            value={priorityFilter}
+            onChange={(e) => setPriorityFilter(e.target.value)}
+            className="border border-gray-300 rounded-lg px-4 py-2 bg-white outline-none focus:ring-2 focus:ring-purple-500"
+          >
+            <option value="ALL">All Priorities</option>
+            <option value="LOW">Low</option>
+            <option value="NORMAL">Normal</option>
+            <option value="HIGH">High</option>
+          </select>
+
+          <span className="text-sm text-gray-500">
+            {filteredComplaints.length} complaints found
+          </span>
+        </div>
+
         {loading && (
           <p className="text-purple-600 mt-8">Loading complaints...</p>
         )}
 
-        {/* Error */}
         {error && <p className="text-red-600 mt-8">{error}</p>}
 
-        {/* Empty State */}
-        {!loading && !error && complaints.length === 0 && (
+        {!loading && !error && filteredComplaints.length === 0 && (
           <div className="bg-white p-8 rounded-xl shadow mt-8 text-center">
-            <p className="text-gray-600">No complaints found.</p>
+            <p className="text-gray-600">No complaints found for this priority.</p>
           </div>
         )}
 
         {/* Complaint List */}
-        {!loading && !error && complaints.length > 0 && (
+        {!loading && !error && filteredComplaints.length > 0 && (
           <div className="mt-8 space-y-5">
-            {complaints.map((complaint) => (
+            {filteredComplaints.map((complaint) => (
               <div
                 key={complaint.id}
                 className="bg-white p-6 rounded-xl shadow"
@@ -193,15 +268,14 @@ function AdminComplaints() {
                     </p>
                   </div>
 
-                  {/* Status Badge */}
-
+                  {/* Status Dropdown */}
                   <select
                     value={complaint.status}
                     onChange={(e) =>
                       handleStatusChange(complaint.id, e.target.value)
                     }
                     className={`h-fit px-3 py-2 rounded-lg text-sm font-semibold outline-none cursor-pointer ${getStatusStyle(
-                      complaint.status,
+                      complaint.status
                     )}`}
                   >
                     <option value="PENDING">PENDING</option>
@@ -210,17 +284,44 @@ function AdminComplaints() {
                   </select>
                 </div>
 
+                {/* Priority Management */}
+                <div className="mt-5 flex flex-wrap items-center gap-3">
+                  <span className="font-semibold text-gray-700">
+                    Priority:
+                  </span>
+
+                  <span
+                    className={`px-3 py-1 rounded-full text-sm font-semibold ${getPriorityStyle(
+                      complaint.priority
+                    )}`}
+                  >
+                    {complaint.priority}
+                  </span>
+
+                  <select
+                    value={complaint.priority}
+                    onChange={(e) =>
+                      handlePriorityChange(complaint.id, e.target.value)
+                    }
+                    className="border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-purple-500"
+                  >
+                    <option value="LOW">LOW</option>
+                    <option value="NORMAL">NORMAL</option>
+                    <option value="HIGH">HIGH</option>
+                  </select>
+                </div>
+
                 {/* Description */}
                 <div className="mt-4">
                   <h3 className="font-semibold text-gray-700">Description</h3>
-
-                  <p className="text-gray-600 mt-1">{complaint.description}</p>
+                  <p className="text-gray-600 mt-1">
+                    {complaint.description}
+                  </p>
                 </div>
 
                 {/* Existing Admin Reply */}
                 <div className="mt-5 bg-purple-50 p-4 rounded-lg">
                   <h3 className="font-semibold text-purple-700">Admin Reply</h3>
-
                   <p className="text-gray-600 mt-2">
                     {complaint.admin_reply || "No reply sent yet."}
                   </p>
@@ -258,20 +359,20 @@ function AdminComplaints() {
                     >
                       Send Reply
                     </button>
-
-                    {/* Error Message */}
-                    {messages[complaint.id] && (
-                      <p
-                        className={`text-sm mt-2 ${
-                          messages[complaint.id].type === "success"
-                            ? "text-green-600"
-                            : "text-red-600"
-                        }`}
-                      >
-                        {messages[complaint.id].text}
-                      </p>
-                    )}
                   </div>
+                )}
+
+                {/* Messages */}
+                {messages[complaint.id] && (
+                  <p
+                    className={`text-sm mt-3 ${
+                      messages[complaint.id].type === "success"
+                        ? "text-green-600"
+                        : "text-red-600"
+                    }`}
+                  >
+                    {messages[complaint.id].text}
+                  </p>
                 )}
               </div>
             ))}
