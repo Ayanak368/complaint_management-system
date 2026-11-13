@@ -24,3 +24,5 @@ class Complaint(Base):
     
     admin_reply = Column(Text, nullable=True)
     
+    priority = Column(String(20), default="NORMAL", nullable=False)
+    
